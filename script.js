@@ -104,7 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="player-card" data-player-id="${player.id}">
-                 <button class="delete-player-btn" aria-label="Delete ${escapeHtml(playerName)}">×</button>
                 <div class="player-info">
                     <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(playerName)} Avatar" class="avatar" onerror="this.src='https://via.placeholder.com/55/eeeeee/cccccc?text=N/A'; this.onerror=null;">
                     <h2 class="player-name">${escapeHtml(playerName)}</h2>
@@ -163,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         players.sort((a, b) => (b.score || 0) - (a.score || 0));
 
         if (players.length === 0) {
-            playersContainer.innerHTML = '<p class="loading-message">No players yet. Add one above!</p>';
+            playersContainer.innerHTML = '<p class="loading-message">No players yet. Add one to DB!</p>';
         } else {
             playersContainer.innerHTML = players.map(createPlayerCardHTML).join('');
         }
@@ -436,9 +435,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // Click wasn't inside a player card we care about
             }
 
-            const playerId = playerCard.dataset.playerId; // Get Supabase UUID
-             // Log 4: Check if player ID was retrieved
-             console.log(`Retrieved player ID: ${playerId}`);
+            const playerIdString = playerCard.dataset.playerId; // Get the ID as a string
+            // Log 4: Check if player ID was retrieved (as string)
+            console.log(`Retrieved player ID string: ${playerIdString}`);
+            
+            const playerIdNumber = parseInt(playerIdString, 10);
+            if (isNaN(playerIdNumber)) {
+                console.error("Could not parse player ID string into a number:", playerIdString);
+                return; // Stop if ID is not a valid number string
+            }
+
 
             const player = players.find(p => p.id === playerId);
              // Log 5: Check if player data was found in the local array
