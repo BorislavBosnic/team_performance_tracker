@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(`Retrieved player ID string: ${playerIdString}`);
             
             const playerId = parseInt(playerIdString, 10);
-            if (isNaN(playerIdNumber)) {
+            if (isNaN(playerId)) {
                 console.error("Could not parse player ID string into a number:", playerIdString);
                 return; // Stop if ID is not a valid number string
             }
