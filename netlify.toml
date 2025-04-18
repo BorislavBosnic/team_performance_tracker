@@ -1,0 +1,11 @@
+# netlify.toml
+
+[build]
+  # Assumes your site files (index.html, etc.) are in the root
+  publish = "."
+
+[functions]
+  # Directory where your serverless functions code will live
+  directory = "netlify/functions"
+  # Specifies node runtime version and bundler
+  node_bundler = "esbuild"

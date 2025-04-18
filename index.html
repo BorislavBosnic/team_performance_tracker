@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Scoreboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Player Progress</h1>
+
+        <!-- Info Blocks Container -->
+        <div class="info-blocks-container">
+            <!-- Points Legend -->
+            <div class="info-block points-legend">
+                <h3>Task Points Guide:</h3>
+                 <p><span class="legend-icon">✉️</span> Telegram Post: <span class="legend-points">1 Point</span></p>
+                 <p><span class="legend-icon">📱</span> Instagram Story: <span class="legend-points">1 Point</span></p>
+                 <p><span class="legend-icon">🔄</span> Instagram Redesign: <span class="legend-points">3 Points</span></p>
+                 <p><span class="legend-icon">✨</span> Instagram New Design: <span class="legend-points">7 Points</span></p>
+            </div>
+            <!-- Prize Pool -->
+            <div class="info-block prize-pool">
+                 <h3>Prize Pool</h3>
+                 <p class="prize-amount">$50.00</p>
+                 <p class="prize-info">Distributed by points</p>
+            </div>
+        </div>
+
+        <!-- Add Player Form Section -->
+        <div class="add-player-section">
+            <h3>Add New Player</h3>
+            <form id="add-player-form">
+                <div class="form-group">
+                    <label for="new-player-name">Name:</label>
+                    <input type="text" id="new-player-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-player-avatar">Avatar URL:</label>
+                    <input type="url" id="new-player-avatar" name="avatarUrl" placeholder="https://example.com/avatar.png" required>
+                </div>
+                <button type="submit" class="btn btn-add-new-player">Add Player</button>
+                <p class="add-player-feedback" id="add-player-feedback"></p>
+            </form>
+        </div>
+
+        <!-- Player Grid - Will be populated by JS -->
+        <div class="players-container" id="players-container">
+            <!-- Player cards will be injected here by script.js -->
+            <p class="loading-message">Loading players...</p> <!-- Initial message -->
+        </div>
+
+         <div class="winner-announcement" id="winner-info">
+             <!-- Winner info updated by JS -->
+         </div>
+
+         <!-- Reset Section -->
+         <div class="reset-section">
+            <button class="btn btn-reset" id="reset-all-btn">Reset All Scores</button>
+            <p class="reset-feedback" id="reset-feedback"></p>
+         </div>
+
+    </div> <!-- End container -->
+
+    <script src="script.js"></script>
+</body>
+</html>
