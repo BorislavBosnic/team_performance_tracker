@@ -409,48 +409,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
 
-    // Event Delegation for Player Card Actions
+       // --- Event Listeners ---
+
+    // ** Event Delegation for Player Card Actions **
     if (playersContainer) {
         playersContainer.addEventListener('click', (event) => {
-            if (isLoading) return; // Prevent actions while loading/updating
+            // Log 1: Check if listener fires at all and isLoading state
+            console.log(`Click detected inside container. isLoading: ${isLoading}`);
+
+            if (isLoading) {
+                console.log("Action prevented because isLoading is true.");
+                return; // Prevent actions while loading/updating
+            }
 
             const target = event.target;
+            // Log 2: See exactly what was clicked
+            console.log("Clicked element:", target);
+
+            // Find the player card associated with the click
             const playerCard = target.closest('.player-card');
-            if (!playerCard) return;
+            // Log 3: Check if player card was found
+            console.log("Found player card:", playerCard);
+
+            if (!playerCard) {
+                console.log("Click was not inside a player card element.");
+                return; // Click wasn't inside a player card we care about
+            }
 
             const playerId = playerCard.dataset.playerId; // Get Supabase UUID
+             // Log 4: Check if player ID was retrieved
+             console.log(`Retrieved player ID: ${playerId}`);
+
             const player = players.find(p => p.id === playerId);
-            if (!player) return;
+             // Log 5: Check if player data was found in the local array
+             console.log("Found player data:", player);
+
+            if (!player) {
+                 console.error(`Could not find local player data for ID: ${playerId}. Sync issue?`);
+                 return;
+            }
 
             let currentScore = player.score || 0;
             let newScore = currentScore;
             let scoreChanged = false;
 
             // Handle Delete Button
-            if (target.closest('.delete-player-btn')) {
-                deletePlayer(playerId, player.name); // Call API function
-                return; // Stop processing other clicks
+            const deleteButton = target.closest('.delete-player-btn');
+            if (deleteButton) {
+                 // Log 6a: Confirm delete button logic reached
+                 console.log(`Delete button clicked for player ID: ${playerId}`);
+                 deletePlayer(playerId, player.name); // Call API function
+                 return; // Stop processing other clicks for this event
             }
 
             // Handle +/- Buttons
             const controlButton = target.closest('.btn-decrement, .btn-increment');
             if (controlButton) {
+                 // Log 6b: Confirm +/- button logic reached
+                 console.log(`Control button clicked for player ID: ${playerId}`, controlButton.className);
                 const pointsInputElement = playerCard.querySelector('.points-input');
                 let points = parseInt(pointsInputElement.value, 10);
                 if (isNaN(points) || points < 1) points = 1;
-                pointsInputElement.value = '1';
+                pointsInputElement.value = '1'; // Reset input
 
                 if (controlButton.classList.contains('btn-increment')) {
                     newScore += points;
-                } else {
+                } else { // Decrement
                     newScore = Math.max(0, newScore - points);
                 }
                 scoreChanged = true;
             }
             // Handle Add Task Button
-            else {
+            else { // Use 'else' because it can't be both +/- and Add Task
                 const addTaskButton = target.closest('.btn-add-task');
                 if (addTaskButton) {
+                    // Log 6c: Confirm Add Task button logic reached
+                    console.log(`Add Task button clicked for player ID: ${playerId}`);
                     const taskRow = addTaskButton.closest('.task-row');
                     if (taskRow) {
                         const taskInputElement = taskRow.querySelector('.task-input');
@@ -458,19 +492,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         let quantity = parseInt(taskInputElement.value, 10);
 
                         if (isNaN(quantity) || quantity < 1) quantity = 1;
-                        taskInputElement.value = '1';
+                        taskInputElement.value = '1'; // Reset input
 
                         if (!isNaN(taskPoints)) {
                             newScore += taskPoints * quantity;
                             scoreChanged = true;
+                        } else {
+                            console.warn("Task points data attribute missing or invalid.");
                         }
+                    } else {
+                         console.warn("Could not find parent .task-row for Add Task button.");
                     }
                 }
-            }
+            } // End Add Task Button check
 
             // If score changed, call the update API function
             if (scoreChanged && newScore !== currentScore) {
-                 // Optimistically update UI first for responsiveness
+                // Log 7: Confirm score update is being triggered
+                console.log(`Score changed from ${currentScore} to ${newScore}. Calling updateScore API...`);
+
+                 // Optimistically update UI first for responsiveness (Optional but good UX)
                  const playerIndex = players.findIndex(p => p.id === playerId);
                  if (playerIndex > -1) {
                      players[playerIndex].score = newScore;
@@ -478,12 +519,17 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                  // Then send update to backend
                 updateScore(playerId, newScore);
+            } else if (scoreChanged) {
+                // Log 8: Log if score calculated but didn't actually change
+                 console.log("Score calculated but resulted in no change.");
+            } else {
+                // Log 9: Log if no relevant button was identified
+                 console.log("No relevant score-changing button identified in this click.");
             }
         });
     } else {
-         console.error("Players container not found on page load.");
+         console.error("Players container not found on page load. Event listeners not attached.");
     }
-
 
     // Add Player Form Submission
     if (addPlayerForm) {
