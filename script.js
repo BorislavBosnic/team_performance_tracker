@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetFeedbackElement = document.getElementById('reset-feedback');
     const addPlayerForm = document.getElementById('add-player-form');
     const addPlayerFeedbackElement = document.getElementById('add-player-feedback');
+    const channelsContainer = document.getElementById('channels-container'); // NEW: Get channels container
 
     // --- Configuration ---
     const MAX_SCORE_FOR_BAR = 100;
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Global State ---
     let players = []; // Array: [ { id: 'uuid', name: '...', avatar_url: '...', score: ... }, ... ]
+    let channels = []; // NEW: Array to store channel data
     let isLoading = true;
 
     // --- API Endpoints (Netlify Functions) ---
@@ -26,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const UPDATE_SCORE_URL = `${API_BASE}/update-score`; // Expects { playerId, newScore }
     const DELETE_PLAYER_URL = `${API_BASE}/delete-player`; // Expects { playerId }
     const RESET_SCORES_URL = `${API_BASE}/reset-scores`; // Expects { password }
+    const GET_CHANNELS_URL = `${API_BASE}/get-channels`; // NEW: Get channels URL
 
     // --- Helper Functions ---
 
@@ -54,6 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Disable buttons within player cards only if the container exists
         if (containerExists) {
            playersContainer.querySelectorAll('button, input').forEach(el => el.disabled = loading);
+        }
+
+        // NEW: Handle loading state for channels container
+        if (loading && channelsContainer) {
+            channelsContainer.innerHTML = `<p class="loading-message">${message}</p>`;
+        }
+        if (!loading && channels.length === 0 && channelsContainer) {
+            channelsContainer.innerHTML = '<p class="loading-message">No channel data found.</p>';
         }
     }
 
@@ -150,11 +161,23 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
+    // NEW: Channel Card HTML Template
+    function createChannelCardHTML(channel) {
+        const channelName = escapeHtml(channel.username || 'Unnamed Channel');
+        const messageCount = typeof channel.scheduled_messages_count === 'number' ? channel.scheduled_messages_count : 0;
+        return `
+            <div class="channel-card">
+                <span class="channel-name">${channelName}</span>
+                <span class="message-count">${messageCount} messages</span>
+            </div>
+        `;
+    }
+
     // --- Core Rendering Function ---
     function renderPlayerList() {
         if (!playersContainer) return;
         if (isLoading) {
-            playersContainer.innerHTML = '<p class="loading-message">Loading...</p>';
+            playersContainer.innerHTML = '<p class="loading-message">Loading players...</p>';
             return; // Don't render if loading
         }
 
@@ -171,6 +194,24 @@ document.addEventListener('DOMContentLoaded', () => {
         // Ensure controls are enabled after rendering if not loading
         playersContainer.querySelectorAll('button, input').forEach(el => el.disabled = false);
     }
+
+    // NEW: Core Rendering Function for Channels
+    function renderChannels() {
+        if (!channelsContainer) return;
+        if (isLoading) {
+            channelsContainer.innerHTML = '<p class="loading-message">Loading channels...</p>';
+            return; // Don't render if loading
+        }
+
+        if (channels.length === 0) {
+            channelsContainer.innerHTML = '<p class="loading-message">No channels found.</p>';
+        } else {
+            // Sort channels by message count descending
+            channels.sort((a, b) => (b.scheduled_messages_count || 0) - (a.scheduled_messages_count || 0));
+            channelsContainer.innerHTML = channels.map(createChannelCardHTML).join('');
+        }
+    }
+
 
     // --- API Call Functions ---
 
@@ -204,6 +245,36 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPlayerList();
         }
     }
+
+    // NEW: Fetch Channels Function
+    async function fetchChannels() {
+        console.log("--- fetchChannels() function entered ---");
+        setLoadingState(true, "Fetching channels..."); // This will also show for channels
+        try {
+            const response = await fetch(GET_CHANNELS_URL);
+            const responseBody = await response.text();
+            if (!response.ok) {
+                let errorDetail = response.statusText;
+                try {
+                    const errorJson = JSON.parse(responseBody);
+                    errorDetail = errorJson.error || errorJson.message || errorDetail;
+                } catch (parseError) { /* Ignore */ }
+                throw new Error(`HTTP error! Status: ${response.status} - ${errorDetail}`);
+            }
+            channels = JSON.parse(responseBody);
+            console.log("Channels fetched:", channels);
+        } catch (error) {
+            console.error("Failed to fetch channels:", error);
+            channels = [];
+            if (channelsContainer) {
+                channelsContainer.innerHTML = `<p class="loading-message error">Error loading channel data: ${error.message}</p>`;
+            }
+        } finally {
+            setLoadingState(false); // This will also turn off loading for players if they finished earlier
+            renderChannels(); // Render channels after fetching
+        }
+    }
+
 
     async function addPlayer(name, avatarUrl) {
          setLoadingState(true, "Adding player...");
@@ -439,10 +510,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Log 4: Check if player ID was retrieved (as string)
             console.log(`Retrieved player ID string: ${playerIdString}`);
             
-            const playerId = parseInt(playerIdString, 10);
-            if (isNaN(playerId)) {
-                console.error("Could not parse player ID string into a number:", playerIdString);
-                return; // Stop if ID is not a valid number string
+            // Player IDs from Supabase are typically UUIDs (strings), not numbers.
+            // Change parseInt to just use the string directly if your Supabase 'id' column is a UUID.
+            // If it's an integer ID, then parseInt is correct. Assuming UUID for 'id' as per typical Supabase setups.
+            const playerId = playerIdString; 
+            if (!playerId) {
+                console.error("Could not retrieve player ID from data attribute:", playerIdString);
+                return; 
             }
 
 
@@ -583,6 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Initial Load ---
-    fetchPlayers(); // Load initial data when the page loads
-
+    // Fetch both players and channels on initial load
+    fetchPlayers(); 
+    fetchChannels();
 });
