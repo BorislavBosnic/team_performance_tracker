@@ -290,51 +290,6 @@ h1 {
 .reset-feedback.success { color: var(--success-color); }
 .reset-feedback.error { color: var(--danger-color); }
 
-/* --- Responsive Adjustments --- */
-@media (max-width: 768px) {
-    body { padding: 30px 15px; }
-    h1 { font-size: 1.9em; margin-bottom: 20px; }
-    .info-blocks-container { gap: 15px; }
-    .info-block { padding: 15px 20px; flex-basis: calc(50% - 10px); /* Try for 2 columns */}
-    .players-container { gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-    .player-card { padding: 20px; }
-    :root { --avatar-size: 50px; }
-    .player-name { font-size: 1.25em; }
-    .score-value { font-size: 1.3em; }
-    .prize-share-value { font-size: 1.1em; }
-    .btn-decrement, .btn-increment { width: 35px; height: 35px; font-size: 1.3em;}
-    .points-input { width: 55px; height: 35px; font-size: 1em;}
-    .task-actions { margin-top: 15px; padding-top: 15px; gap: 12px;}
-    .task-label { font-size: 0.85em; }
-    .task-input { width: 45px; height: 30px; font-size: 0.85em;}
-    .btn-add-task { padding: 5px 10px; height: 30px; font-size: 0.8em; }
-}
-
-@media (max-width: 600px) { /* Stack info blocks earlier */
-    .info-block { flex-basis: 100%; } /* Full width */
-}
-
-@media (max-width: 480px) {
-     body { padding: 20px 10px; }
-     h1 { font-size: 1.6em; margin-bottom: 15px; }
-    .players-container { grid-template-columns: 1fr; } /* Stack players */
-    .player-card { padding: 15px; }
-     :root { --avatar-size: 45px; }
-    .player-name { font-size: 1.15em; }
-     .score-value { font-size: 1.2em; }
-     .prize-share-value { font-size: 1em; }
-     .score-display > div { flex-basis: 100%; } /* Stack score/prize vertically */
-     .controls { gap: 8px; margin-bottom: 20px; }
-     .task-actions { gap: 10px; }
-     .task-row { flex-wrap: wrap; }
-     .task-label { width: 100%; text-align: center; margin-bottom: 5px; order: -1; }
-     .task-icon { display: none; }
-     .reset-section { margin-top: 30px; }
-     .btn-reset { padding: 10px 20px; font-size: 1em;}
-
-
-/* --- Add this CSS to your existing style.css --- */
-
 /* --- Add Player Section --- */
 .add-player-section {
     background-color: var(--card-bg);
@@ -399,7 +354,6 @@ h1 {
     border: none;
     transition: background-color var(--transition-speed) ease;
     align-self: center; /* Center button */
-     /* Override generic .btn styles if needed */
      width: auto;
      height: auto;
      border-radius: 6px;
@@ -459,36 +413,201 @@ h1 {
     padding: 40px 0;
 }
 
+
+/* --- Channels Section Styling (UPDATED) --- */
 .channels-section {
-    margin-top: 20px;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-top: 40px; /* More space from reset section */
+    padding: 25px 30px; /* More padding */
+    background-color: var(--card-bg); /* Use card background for consistency */
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow); /* Consistent shadow */
+    text-align: center; /* Center heading */
 }
 
 .channels-section h3 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
-    color: #333;
+    font-size: 1.8em; /* Slightly larger heading */
+    margin-bottom: 25px; /* More space below heading */
+    color: #2c3e50; /* Consistent heading color */
+    font-weight: 600;
 }
 
-.channel-info {
-    font-size: 1em;
-    margin: 5px 0;
-    color: #555;
+#channels-container {
+    display: grid;
+    /* Each channel takes a full row */
+    grid-template-columns: 1fr;
+    gap: 15px; /* Space between channel rows */
 }
 
-/* --- Adjustments for smaller screens if needed --- */
+.channel-card {
+    background-color: #f8f9fa; /* Lighter background for channel cards */
+    border: 1px solid #e0e0e0; /* Subtle border */
+    border-radius: var(--border-radius);
+    padding: 15px 20px; /* Adjusted padding */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+    display: flex; /* Use flexbox for internal layout */
+    justify-content: space-between; /* Pushes name to left, progress to right */
+    align-items: center; /* Vertically center name and progress */
+    flex-wrap: wrap; /* Allow wrapping if content is too wide */
+    gap: 10px; /* Space between flex items */
+    transition: transform var(--transition-speed) ease;
+}
+
+.channel-card:hover {
+    transform: translateY(-3px); /* Subtle hover effect */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.channel-name {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #34495e;
+    text-align: left;
+    /* Remove flex-grow and max-width to let it occupy natural space, but shrink if needed */
+    flex-shrink: 1; /* Allow name to shrink if needed */
+    min-width: 0; /* Allow text to wrap inside */
+}
+
+.channel-progress-group {
+    display: flex;
+    flex-direction: column; /* Stack count and bar vertically */
+    align-items: flex-end; /* Align count and bar to the right */
+    flex-grow: 1; /* Allow the progress group to take remaining space */
+    min-width: 120px; /* Minimum width for the bar and count to look good */
+    margin-left: 15px; /* Space between name and this group */
+}
+
+.message-count-display {
+    display: flex;
+    align-items: baseline;
+    gap: 5px; /* Smaller gap */
+    font-size: 0.95em; /* Smaller font for count display */
+    white-space: nowrap; /* Keep "X / Y messages scheduled" on one line */
+    margin-bottom: 5px; /* Space between count and bar */
+}
+
+.message-count-value {
+    font-size: 1.2em; /* Smaller number */
+    font-weight: 700;
+    color: var(--primary-accent);
+}
+
+.message-count-label {
+    color: var(--secondary-accent);
+    font-weight: 500;
+}
+
+/* Channel Bar styles */
+.channel-bar-track {
+    width: 100%; /* Take full width of its parent (.channel-progress-group) */
+    height: var(--bar-height);
+    background-color: #e9ecef;
+    border-radius: calc(var(--bar-height) / 2);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.channel-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0; /* Will be set by JS */
+    border-radius: calc(var(--bar-height) / 2);
+    /* Base color - will be overridden by JS classes */
+    background-color: #ccc;
+    transition: width var(--transition-speed) ease-out, background-color var(--transition-speed) ease, background-image var(--transition-speed) ease;
+}
+
+/* Dynamic progress bar colors (handled by JS adding classes) */
+.channel-bar-fill.color-red {
+    background-image: linear-gradient(to right, #dc3545, #c82333);
+}
+.channel-bar-fill.color-orange {
+    background-image: linear-gradient(to right, #ffc107, #e0a800);
+}
+.channel-bar-fill.color-green {
+    background-image: linear-gradient(to right, #28a745, #218838);
+}
+
+
+/* Responsive adjustments for channels */
+@media (max-width: 768px) {
+    .channels-section { padding: 20px 25px; margin-top: 30px; }
+    .channels-section h3 { font-size: 1.6em; margin-bottom: 20px; }
+    #channels-container { gap: 15px; } /* Consistent gap */
+    .channel-card { padding: 15px; }
+    .channel-name { font-size: 1em; } /* Slightly smaller for tablets */
+    .channel-progress-group { min-width: 100px; margin-left: 10px; }
+    .message-count-display { font-size: 0.9em; }
+    .message-count-value { font-size: 1.1em; }
+}
+
 @media (max-width: 480px) {
-    .add-player-section {
-        padding: 15px;
+    .channels-section { padding: 15px 20px; margin-top: 25px; }
+    .channels-section h3 { font-size: 1.4em; margin-bottom: 15px; }
+    #channels-container { gap: 12px; }
+    .channel-card {
+        flex-direction: column; /* Stack name, count, and bar */
+        align-items: flex-start; /* Align all to left when stacked */
+        padding: 12px;
     }
+    .channel-name { width: 100%; margin-right: 0; margin-bottom: 8px; }
+    .channel-progress-group {
+        width: 100%; /* Take full width when stacked */
+        align-items: flex-start; /* Align to left when stacked */
+        margin-left: 0; /* Remove left margin when stacked */
+        min-width: unset; /* Remove min-width constraint */
+    }
+    .message-count-display { width: 100%; justify-content: flex-start; margin-bottom: 5px; }
+}
+
+/* --- Responsive Adjustments for general layout (keep these at the very end) --- */
+@media (max-width: 768px) {
+    body { padding: 30px 15px; }
+    h1 { font-size: 1.9em; margin-bottom: 20px; }
+    .info-blocks-container { gap: 15px; }
+    .info-block { padding: 15px 20px; flex-basis: calc(50% - 10px); }
+    .players-container { gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .player-card { padding: 20px; }
+    :root { --avatar-size: 50px; }
+    .player-name { font-size: 1.25em; }
+    .score-value { font-size: 1.3em; }
+    .prize-share-value { font-size: 1.1em; }
+    .btn-decrement, .btn-increment { width: 35px; height: 35px; font-size: 1.3em;}
+    .points-input { width: 55px; height: 35px; font-size: 1em;}
+    .task-actions { margin-top: 15px; padding-top: 15px; gap: 12px;}
+    .task-label { font-size: 0.85em; }
+    .task-input { width: 45px; height: 30px; font-size: 0.85em;}
+    .btn-add-task { padding: 5px 10px; height: 30px; font-size: 0.8em; }
+}
+
+@media (max-width: 600px) {
+    .info-block { flex-basis: 100%; }
+}
+
+@media (max-width: 480px) {
+     body { padding: 20px 10px; }
+     h1 { font-size: 1.6em; margin-bottom: 15px; }
+    .players-container { grid-template-columns: 1fr; }
+    .player-card { padding: 15px; }
+     :root { --avatar-size: 45px; }
+    .player-name { font-size: 1.15em; }
+     .score-value { font-size: 1.2em; }
+     .prize-share-value { font-size: 1em; }
+     .score-display > div { flex-basis: 100%; }
+     .controls { gap: 8px; margin-bottom: 20px; }
+     .task-actions { gap: 10px; }
+     .task-row { flex-wrap: wrap; }
+     .task-label { width: 100%; text-align: center; margin-bottom: 5px; order: -1; }
+     .task-icon { display: none; }
+     .reset-section { margin-top: 30px; }
+     .btn-reset { padding: 10px 20px; font-size: 1em;}
+    .add-player-section { padding: 15px; }
      .player-card .delete-player-btn {
         width: 24px;
         height: 24px;
         font-size: 14px;
         line-height: 24px;
      }
-}
 }

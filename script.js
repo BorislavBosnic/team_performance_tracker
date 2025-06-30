@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Configuration ---
     const MAX_SCORE_FOR_BAR = 100;
+    const MAX_MESSAGES_FOR_BAR = 20; // NEW: Define max messages for channel progress bar
     // ADMIN_PASSWORD is now only used/checked in the backend Netlify Function
     const PRIZE_POOL_AMOUNT = 50.00;
 
@@ -60,11 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // NEW: Handle loading state for channels container
-        if (loading && channelsContainer) {
-            channelsContainer.innerHTML = `<p class="loading-message">${message}</p>`;
-        }
-        if (!loading && channels.length === 0 && channelsContainer) {
-            channelsContainer.innerHTML = '<p class="loading-message">No channel data found.</p>';
+        if (channelsContainer) { // Check if element exists before manipulating
+            if (loading) {
+                channelsContainer.innerHTML = `<p class="loading-message">${message}</p>`;
+            } else if (channels.length === 0) {
+                channelsContainer.innerHTML = '<p class="loading-message">No channel data found.</p>';
+            }
         }
     }
 
@@ -160,15 +162,38 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
-
-    // NEW: Channel Card HTML Template
+    // NEW: Channel Card HTML Template (UPDATED)
     function createChannelCardHTML(channel) {
         const channelName = escapeHtml(channel.username || 'Unnamed Channel');
-        const messageCount = typeof channel.scheduled_messages_count === 'number' ? channel.scheduled_messages_count : 0;
+        const messageCount = typeof channel.scheduled_messages_count === 'number' ? channel.scheduled_messages_count-1 : 0;
+    
+        const barWidthPercentage = MAX_MESSAGES_FOR_BAR > 0
+            ? Math.min(100, (messageCount / MAX_MESSAGES_FOR_BAR) * 100)
+            : 0;
+    
+        // Determine the color gradient based on progress
+        let barGradientStyle;
+        if (barWidthPercentage < 50) {
+            // Red gradient (similar to player-1-bar)
+            barGradientStyle = 'background-image: linear-gradient(to right, #e74c3c, #c0392b); background-color: #e74c3c;';
+        } else if (barWidthPercentage < 100) {
+            // Yellow/Orange gradient (similar to player-3-bar)
+            barGradientStyle = 'background-image: linear-gradient(to right, #f1c40f, #f39c12); background-color: #f1c40f;';
+        } else {
+            // Green gradient (similar to player-2-bar)
+            barGradientStyle = 'background-image: linear-gradient(to right, #2ecc71, #27ae60); background-color: #2ecc71;';
+        }
+    
         return `
             <div class="channel-card">
-                <span class="channel-name">${channelName}</span>
-                <span class="message-count">${messageCount} messages</span>
+                <h3 class="channel-name">@${channelName}</h3>
+                <div class="message-count-display">
+                    <span class="message-count-value">${messageCount}</span>
+                    <span class="message-count-label">/ ${MAX_MESSAGES_FOR_BAR} messages scheduled</span>
+                </div>
+                <div class="channel-bar-track">
+                    <div class="channel-bar-fill" style="width: ${barWidthPercentage}%; ${barGradientStyle}"></div>
+                </div>
             </div>
         `;
     }
@@ -176,17 +201,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Core Rendering Function ---
     function renderPlayerList() {
         if (!playersContainer) return;
-        if (isLoading) {
+        if (isLoading && players.length === 0) { // Only show loading if actually loading and no data yet
             playersContainer.innerHTML = '<p class="loading-message">Loading players...</p>';
-            return; // Don't render if loading
+            // return; // Don't return if data might be partially loaded
         }
 
         // Sort players by score descending before rendering
         players.sort((a, b) => (b.score || 0) - (a.score || 0));
 
-        if (players.length === 0) {
+        if (players.length === 0 && !isLoading) { // Show "No players" only if not loading and empty
             playersContainer.innerHTML = '<p class="loading-message">No players yet. Add one to DB!</p>';
-        } else {
+        } else if (players.length > 0) {
             playersContainer.innerHTML = players.map(createPlayerCardHTML).join('');
         }
         calculateAndDisplayPrizes();
@@ -195,17 +220,17 @@ document.addEventListener('DOMContentLoaded', () => {
         playersContainer.querySelectorAll('button, input').forEach(el => el.disabled = false);
     }
 
-    // NEW: Core Rendering Function for Channels
+    // NEW: Core Rendering Function for Channels (UPDATED)
     function renderChannels() {
         if (!channelsContainer) return;
-        if (isLoading) {
+        if (isLoading && channels.length === 0) { // Only show loading if actually loading and no data yet
             channelsContainer.innerHTML = '<p class="loading-message">Loading channels...</p>';
-            return; // Don't render if loading
+            // return; // Don't return if data might be partially loaded
         }
 
-        if (channels.length === 0) {
+        if (channels.length === 0 && !isLoading) { // Show "No channels" only if not loading and empty
             channelsContainer.innerHTML = '<p class="loading-message">No channels found.</p>';
-        } else {
+        } else if (channels.length > 0) {
             // Sort channels by message count descending
             channels.sort((a, b) => (b.scheduled_messages_count || 0) - (a.scheduled_messages_count || 0));
             channelsContainer.innerHTML = channels.map(createChannelCardHTML).join('');
@@ -216,13 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- API Call Functions ---
 
     async function fetchPlayers() {
-    console.log("--- fetchPlayers() function entered ---"); // Add this
-        setLoadingState(true, "Fetching players...");
+        console.log("--- fetchPlayers() function entered ---");
+        setLoadingState(true, "Fetching data..."); // Unified loading message for both fetches
         try {
             const response = await fetch(GET_PLAYERS_URL);
-             const responseBody = await response.text(); // Read body first
+            const responseBody = await response.text();
             if (!response.ok) {
-                 // Try to parse error from body, otherwise use status text
                  let errorDetail = response.statusText;
                  try {
                     const errorJson = JSON.parse(responseBody);
@@ -230,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  } catch (parseError) { /* Ignore if body is not JSON */ }
                  throw new Error(`HTTP error! Status: ${response.status} - ${errorDetail}`);
             }
-             // Parse JSON only if response is ok
              players = JSON.parse(responseBody);
             console.log("Players fetched:", players);
         } catch (error) {
@@ -241,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 winnerInfoElement.className = 'winner-announcement error visible';
             }
         } finally {
-            setLoadingState(false);
+            // setLoadingState(false); // Only set to false after BOTH fetches are complete
             renderPlayerList();
         }
     }
@@ -249,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // NEW: Fetch Channels Function
     async function fetchChannels() {
         console.log("--- fetchChannels() function entered ---");
-        setLoadingState(true, "Fetching channels..."); // This will also show for channels
+        setLoadingState(true, "Fetching data..."); // Unified loading message for both fetches
         try {
             const response = await fetch(GET_CHANNELS_URL);
             const responseBody = await response.text();
@@ -270,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 channelsContainer.innerHTML = `<p class="loading-message error">Error loading channel data: ${error.message}</p>`;
             }
         } finally {
-            setLoadingState(false); // This will also turn off loading for players if they finished earlier
+            // setLoadingState(false); // Only set to false after BOTH fetches are complete
             renderChannels(); // Render channels after fetching
         }
     }
@@ -657,7 +680,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Initial Load ---
-    // Fetch both players and channels on initial load
-    fetchPlayers(); 
-    fetchChannels();
+    // Use Promise.all to fetch both simultaneously and set loading to false once both are done
+    Promise.all([
+        fetchPlayers(),
+        fetchChannels()
+    ]).finally(() => {
+        setLoadingState(false, "Data loaded."); // Set loading to false once all fetches are complete
+    });
+
 });
