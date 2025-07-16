@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // }
 
 
-            const player = players.find(p => p.id === playerId);
+            const player = players.find(p => p.id == playerId);
              // Log 5: Check if player data was found in the local array
              console.log("Found player data:", player);
 
