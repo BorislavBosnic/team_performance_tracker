@@ -537,10 +537,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Change parseInt to just use the string directly if your Supabase 'id' column is a UUID.
             // If it's an integer ID, then parseInt is correct. Assuming UUID for 'id' as per typical Supabase setups.
             const playerId = playerIdString; 
-            if (!playerId) {
-                console.error("Could not retrieve player ID from data attribute:", playerIdString);
-                return; 
-            }
+            console.log(playerId)
+            // if (!playerId) {
+            //     console.error("Could not retrieve player ID from data attribute:", playerIdString);
+            //     return; 
+            // }
 
 
             const player = players.find(p => p.id === playerId);
